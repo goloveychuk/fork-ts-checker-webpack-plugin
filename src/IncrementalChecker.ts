@@ -10,6 +10,7 @@ import { NormalizedMessage } from './NormalizedMessage';
 import { CancellationToken } from './CancellationToken';
 import * as minimatch from 'minimatch';
 import { VueProgram } from './VueProgram';
+import { getResolveModuleNames } from './resolveModuleNames';
 
 // Need some augmentation here - linterOptions.exclude is not (yet) part of the official
 // types for tslint.
@@ -96,11 +97,15 @@ export class IncrementalChecker {
 
   static createProgram(
     programConfig: ts.ParsedCommandLine,
+    programConfigFile: string,
     files: FilesRegister,
     watcher: FilesWatcher,
     oldProgram: ts.Program
   ) {
     const host = ts.createCompilerHost(programConfig.options);
+
+    host.resolveModuleNames = getResolveModuleNames(programConfigFile);
+
     const realGetSourceFile = host.getSourceFile;
 
     host.getSourceFile = (filePath, languageVersion, onError) => {
@@ -220,6 +225,7 @@ export class IncrementalChecker {
 
     return IncrementalChecker.createProgram(
       this.programConfig,
+      this.programConfigFile,
       this.files,
       this.watcher,
       this.program
